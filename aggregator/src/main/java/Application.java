@@ -1,46 +1,26 @@
-import connector.ExternalApiConnector;
-import connector.FileConnector;
-import connector.RandomConnector;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import aggregator.Sum;
+import aggregator.SumImpl;
+import controller.SumController;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import service.AggregationService;
 
 @Slf4j
+@RequiredArgsConstructor
 public class Application {
 
-  // Check for: USD, CAD, EUR, GBP
-  private static final String CURRENCY = "USD";
-  private static final String MARGE_FILE = "marge/currency-marge.txt";
-
-  // Service
-  private static final AggregationService service = new AggregationService();
-
-  // Connectors - data producers
-  private static final ExternalApiConnector externalApiConnector = new ExternalApiConnector();
-  private static final FileConnector fileConnector = new FileConnector();
-  private static final RandomConnector randomConnector = new RandomConnector();
+  private static final SumController sumController = new SumController();
+  private static final Sum summator = new SumImpl();
 
   public static void main(String[] args) {
-    List<BigDecimal> numbersToAggregate = new ArrayList<>();
 
-    // Source 1: Get mid price of selected currency from the last working day
-    BigDecimal currencyPrice = externalApiConnector.getLastMidRateForCurrency(CURRENCY)
-      .orElse(BigDecimal.ZERO);
-    numbersToAggregate.add(currencyPrice);
+    summator.input(sumController.sumMidValue());
 
-    // Source 2: Marge price which exchange is giving for transaction
-    BigDecimal margeOfCurrency = fileConnector.getRandomBigDecimalFromFile(MARGE_FILE);
-    numbersToAggregate.add(margeOfCurrency);
+    summator.input(sumController.sumRandomValueFromFile());
 
-    // Source 3: Random tax for currency price
-    BigDecimal tax = randomConnector.createRandomBigDecimalForRange(3);
-    numbersToAggregate.add(tax);
+    summator.input(sumController.sumRandomDecimalValue());
 
     // RESULT
-    BigDecimal result = service.sum(numbersToAggregate);
+    log.info("RESULT | Sum is equal: [{}]", summator.getSumValue());
 
-    log.info("RESULT | Sum of {} equal: [{}]", numbersToAggregate, result);
   }
 }

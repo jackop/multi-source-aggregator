@@ -1,52 +1,57 @@
 package connector;
 
+import static configuration.AppConstant.API_URL;
+import static configuration.AppConstant.CURRENCY_USD;
+import static java.lang.String.valueOf;
 import static java.util.Collections.emptyList;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
+import java.util.Scanner;
 import lombok.extern.slf4j.Slf4j;
-import model.Rate;
-import model.Table;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
-public class ExternalApiConnector {
-
-  private static final String API_URL = "http://api.nbp.pl/api/exchangerates/tables/A";
-  private final ObjectMapper objectMapper = new ObjectMapper();
+public class ExternalApiConnector implements Connector {
 
   /**
    * Get the last MID rate for selected currency by code.
    */
-  public Optional<BigDecimal> getLastMidRateForCurrency(String currencyCode) {
-    RestTemplate restTemplate = new RestTemplate();
-    ResponseEntity<String> response = restTemplate.getForEntity(API_URL, String.class);
-    List<Table> tables = mapperTableObject(response.getBody());
+  @Override
+  public BigDecimal getDecimalsFromSource() {
+    try (
+      InputStream openStream = new URL(API_URL).openStream();
+      Scanner scanner = new Scanner(openStream, valueOf(StandardCharsets.UTF_8))) {
+      List<Table> tables = mapperTableObject(scanner.nextLine());
 
-    log.info(".getLastMidRateForCurrency() | Trading rates from table: [{}], date of trade: {}",
-      tables.get(0).getNo(), tables.get(0).getEffectiveDate());
+      return tables.stream().map(Table::getRates)
+        .flatMap(List::stream)
+        .filter(rate -> rate.getCode().equalsIgnoreCase(CURRENCY_USD))
+        .map(Rate::getMid)
+        .findFirst()
+        .orElse(BigDecimal.ZERO);
+    } catch (IOException exception) {
+      log.debug(".mapperTableObject() | Exception during get data for currency: ", exception);
+    }
 
-    return tables.stream().map(Table::getRates)
-      .flatMap(List::stream)
-      .filter(rate -> rate.getCode().equalsIgnoreCase(currencyCode))
-      .map(Rate::getMid)
-      .findFirst();
+    return BigDecimal.ZERO;
   }
 
   /**
    * Map json as string for list of objects `Table`
    */
   private List<Table> mapperTableObject(String json) {
+    ObjectMapper objectMapper = new ObjectMapper();
     try {
       return objectMapper.readValue(json, new TypeReference<List<Table>>() {});
     } catch (IOException exception) {
-      log.info(".mapperTableObject() | Exception for json: {}", json, exception);
+      log.debug(".mapperTableObject() | Exception for json: {}", json, exception);
     }
     return emptyList();
   }

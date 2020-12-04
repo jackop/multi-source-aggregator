@@ -1,5 +1,7 @@
 package connector;
 
+import static configuration.AppConstant.EMPTY;
+import static configuration.AppConstant.MARGE_FILE;
 import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
@@ -15,16 +17,15 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class FileConnector {
-
-  private static final String EMPTY = "";
+public class FileConnector implements Connector {
   private static final Random RANDOM = new Random();
 
   /**
    * Get random big decimals from file
    */
-  public BigDecimal getRandomBigDecimalFromFile(String fileName) {
-    String line = getLineFromFile(fileName);
+  @Override
+  public BigDecimal getDecimalsFromSource() {
+    String line = getLineFromFile();
     List<BigDecimal> bigDecimals = mapStringToListOfBigDecimals(line);
 
     return bigDecimals.get(RANDOM.nextInt(bigDecimals.size()));
@@ -33,9 +34,9 @@ public class FileConnector {
   /**
    * Parse line from file in resources to get String line from it.
    */
-  private String getLineFromFile(String fileName) {
+  private String getLineFromFile() {
     ClassLoader classLoader = getClass().getClassLoader();
-    URL resource = classLoader.getResource(fileName);
+    URL resource = classLoader.getResource(MARGE_FILE);
     File file = new File(EMPTY);
     if (nonNull(resource)) {
       file = new File(resource.getFile());
@@ -43,7 +44,7 @@ public class FileConnector {
     try(Scanner scanner = new Scanner(file)) {
       return scanner.nextLine();
     } catch (FileNotFoundException exception) {
-      log.debug("FileConnector.getLineFromFile() | Exception for file {}", fileName, exception);
+      log.debug("FileConnector.getLineFromFile() | Exception: ", exception);
     }
     return EMPTY;
   }

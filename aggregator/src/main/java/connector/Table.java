@@ -1,4 +1,4 @@
-package model;
+package connector;
 
 import java.util.List;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class Table {
+class Table {
 
   private String table;
   private String no;
