@@ -12,8 +12,8 @@ public class SumImpl implements Sum {
   List<BigDecimal> numbersToSum = new ArrayList<>();
 
   @Override
-  public void input(BigDecimal num) {
-    numbersToSum.add(num);
+  public boolean input(BigDecimal num) {
+    return numbersToSum.add(num);
   }
 
   @Override

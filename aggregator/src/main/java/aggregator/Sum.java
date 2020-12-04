@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public interface Sum {
 
-  void input(BigDecimal num);
+  boolean input(BigDecimal num);
 
   BigDecimal getSumValue();
 }
