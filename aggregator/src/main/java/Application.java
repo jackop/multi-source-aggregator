@@ -1,26 +1,29 @@
-import aggregator.Sum;
-import aggregator.SumImpl;
-import controller.SumController;
+import connector.Connector;
+import connector.ExternalApiConnector;
+import connector.FileConnector;
+import connector.RandomConnector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigDecimal;
+
+import static java.util.Arrays.asList;
 
 @Slf4j
 @RequiredArgsConstructor
 public class Application {
 
-  private static final SumController sumController = new SumController();
-  private static final Sum summator = new SumImpl();
-
   public static void main(String[] args) {
 
-    summator.input(sumController.sumMidValue());
-
-    summator.input(sumController.sumRandomValueFromFile());
-
-    summator.input(sumController.sumRandomDecimalValue());
+    Connector.connectorList.addAll(asList(new FileConnector(), new RandomConnector(), new ExternalApiConnector()));
+    double value = Connector.connectorList.stream()
+            .map(Connector::getValue)
+            .peek(valueToPrint -> log.info(valueToPrint.toPlainString()))
+            .mapToDouble(BigDecimal::doubleValue)
+            .sum();
 
     // RESULT
-    log.info("RESULT | Sum is equal: [{}]", summator.getSumValue());
+    log.info("RESULT | Value is equal: [{}]", value);
 
   }
 }

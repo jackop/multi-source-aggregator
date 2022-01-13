@@ -1,18 +1,17 @@
 package connector;
 
-import static configuration.AppConstant.RANDOM_DECIMAL;
-import static configuration.AppConstant.RANDOM_RANGE;
 import static java.lang.Math.random;
 import java.math.BigDecimal;
-import org.springframework.stereotype.Service;
 
-@Service
 public class RandomConnector implements Connector {
 
+  public static final int RANDOM_RANGE = 3;
+  public static final int RANDOM_DECIMAL = 4;
+
   @Override
-  public BigDecimal getDecimalsFromSource() {
-    BigDecimal max = new BigDecimal(RANDOM_RANGE);
-    BigDecimal randFromDouble = BigDecimal.valueOf(random());
+  public BigDecimal getValue() {
+    final BigDecimal max = new BigDecimal(RANDOM_RANGE);
+    final BigDecimal randFromDouble = BigDecimal.valueOf(random());
 
     return randFromDouble
       .multiply(max)
